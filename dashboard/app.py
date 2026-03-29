@@ -1,14 +1,15 @@
-import sys
+import requests
+# import sys
 import os
 import streamlit as st
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from decision_engine.decision import get_action
-from models.predict_incident import predict
+# from decision_engine.decision import get_action
+# from models.predict_incident import predict
 
 st.set_page_config(page_title="AI Monitoring System", layout="centered")
 
@@ -50,12 +51,33 @@ if run:
     for _ in range(1000):
 
         # 🔥 Prediction
-        incident, severity = predict(
-            temperature, humidity, motion, smoke, power_usage
-        )
+        # incident, severity = predict(
+        #     temperature, humidity, motion, smoke, power_usage
+        # )
 
-        # 🔥 Decision
-        action = get_action(incident, severity)
+        # # 🔥 Decision
+        # action = get_action(incident, severity)
+        
+        url = "http://127.0.0.1:8000/predict"
+        data = {
+            "temperature": temperature,
+            "humidity": humidity,
+            "motion": motion,
+            "smoke": smoke,
+            "power_usage": power_usage
+        }
+        
+        try:
+            response = requests.post(url, json=data)
+            result = response.json()
+            incident = result["incident"]
+            severity = result["severity"]
+            action = result["recommended_action"]
+
+        except:
+            incident = "API Error"
+            severity = "low"
+            action = "Check backend server"
 
         # =========================
         # ✅ LOGGING (FIXED)
@@ -131,9 +153,7 @@ if os.path.exists(log_file):
 
         st.pyplot(fig2)
 
-        # -------------------------
-        # 3️⃣ Temperature Trend
-        # -------------------------
+
         st.write("### Temperature Trend")
 
         fig3, ax3 = plt.subplots()
